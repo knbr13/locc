@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 )
 
@@ -47,35 +49,59 @@ func main() {
 		os.Exit(1)
 	}
 
-	if !info.IsDir() {
-		fmt.Fprintf(os.Stderr, "Error: %s is not a directory\n", config.Path)
-		os.Exit(1)
-	}
-
 	// Start timing
 	startTime := time.Now()
 
-	// Create walker and process files
-	walker := NewWalker(config.Path, config.Workers)
-	walker.SetIncludeHidden(config.IncludeHidden)
+	var fileStats []*FileStats
+	var errors []error
+	processedFiles := 0
+	skippedFiles := 0
 
-	// Add any additional exclude directories
-	for _, dir := range config.ExcludeDirs {
-		walker.AddExcludeDir(dir)
+	if !info.IsDir() {
+		// Single file mode
+		ext := strings.ToLower(filepath.Ext(config.Path))
+		lang := GetLanguage(ext)
+		if lang == nil {
+			lang = GetLanguageByFilename(filepath.Base(config.Path))
+		}
+
+		if lang == nil {
+			skippedFiles = 1
+		} else {
+			stats, err := CountLines(config.Path, lang)
+			if err != nil {
+				errors = append(errors, err)
+			} else {
+				stats.Extension = ext
+				fileStats = append(fileStats, stats)
+				processedFiles = 1
+			}
+		}
+	} else {
+		// Directory mode
+		walker := NewWalker(config.Path, config.Workers)
+		walker.SetIncludeHidden(config.IncludeHidden)
+
+		// Add any additional exclude directories
+		for _, dir := range config.ExcludeDirs {
+			walker.AddExcludeDir(dir)
+		}
+
+		// Add exclude patterns
+		for _, pattern := range config.ExcludePatterns {
+			walker.AddExcludePattern(pattern)
+		}
+
+		if config.Verbose {
+			LogDebug("Starting LOC count in: %s", config.Path)
+			LogDebug("Using %d workers", config.Workers)
+		}
+
+		// Walk and count
+		fileStats, errors = walker.Walk()
+		processedFiles = walker.GetProcessedCount()
+		skippedFiles = walker.GetSkippedCount()
 	}
-
-	// Add exclude patterns
-	for _, pattern := range config.ExcludePatterns {
-		walker.AddExcludePattern(pattern)
-	}
-
-	if config.Verbose {
-		LogDebug("Starting LOC count in: %s", config.Path)
-		LogDebug("Using %d workers", config.Workers)
-	}
-
-	// Walk and count
-	fileStats, errors := walker.Walk()
 
 	// Calculate elapsed time
 	elapsed := time.Since(startTime)
@@ -83,10 +109,6 @@ func main() {
 	// Aggregate statistics
 	langStats := AggregateStats(fileStats)
 	total := TotalStats(langStats)
-
-	// Get counts
-	processedFiles := walker.GetProcessedCount()
-	skippedFiles := walker.GetSkippedCount()
 	errorCount := len(errors)
 
 	// Output results based on format
