@@ -1,5 +1,28 @@
 package main
 
+import "sync"
+
+var (
+	languageSync           sync.Map
+	fileNameLanguageSync   sync.Map
+	hiddenFileLanguageSync sync.Map
+)
+
+func init() {
+	for k, v := range Languages {
+		languageSync.Store(k, v)
+	}
+
+	for k, v := range FilenameLanguages {
+		fileNameLanguageSync.Store(k, v)
+	}
+
+	for k, v := range HiddenFileLanguages {
+		hiddenFileLanguageSync.Store(k, v)
+	}
+
+}
+
 // Language represents a programming language with its comment patterns
 type Language struct {
 	Name              string
@@ -12,140 +35,143 @@ type Language struct {
 }
 
 // Languages defines all supported programming languages and their comment patterns
-var Languages = map[string]*Language{
-	".go": {
+var Languages = func() map[string]*Language {
+	const capacity = 115
+	m := make(map[string]*Language, capacity)
+
+	m[".go"] = &Language{
 		Name:              "Go",
 		Extensions:        []string{".go"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\"", "`"},
-	},
-	".js": {
+	}
+	m[".js"] = &Language{
 		Name:              "JavaScript",
 		Extensions:        []string{".js"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\"", "'", "`"},
-	},
-	".ts": {
+	}
+	m[".ts"] = &Language{
 		Name:              "TypeScript",
 		Extensions:        []string{".ts"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\"", "'", "`"},
-	},
-	".tsx": {
+	}
+	m[".tsx"] = &Language{
 		Name:              "TypeScript JSX",
 		Extensions:        []string{".tsx"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".jsx": {
+	}
+	m[".jsx"] = &Language{
 		Name:              "JavaScript JSX",
 		Extensions:        []string{".jsx"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".html": {
+	}
+	m[".html"] = &Language{
 		Name:              "HTML",
 		Extensions:        []string{".html", ".htm"},
 		SingleLineComment: "",
 		MultiLineStart:    "<!--",
 		MultiLineEnd:      "-->",
-	},
-	".htm": {
+	}
+	m[".htm"] = &Language{
 		Name:              "HTML",
 		Extensions:        []string{".html", ".htm"},
 		SingleLineComment: "",
 		MultiLineStart:    "<!--",
 		MultiLineEnd:      "-->",
-	},
-	".py": {
+	}
+	m[".py"] = &Language{
 		Name:              "Python",
 		Extensions:        []string{".py"},
 		SingleLineComment: "#",
 		MultiLineStart:    `"""`,
 		MultiLineEnd:      `"""`,
 		StringDelimiters:  []string{"\"", "'"},
-	},
-	".rb": {
+	}
+	m[".rb"] = &Language{
 		Name:              "Ruby",
 		Extensions:        []string{".rb"},
 		SingleLineComment: "#",
 		MultiLineStart:    "=begin",
 		MultiLineEnd:      "=end",
 		StringDelimiters:  []string{"\"", "'"},
-	},
-	".java": {
+	}
+	m[".java"] = &Language{
 		Name:              "Java",
 		Extensions:        []string{".java"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\"", "'"},
-	},
-	".c": {
+	}
+	m[".c"] = &Language{
 		Name:              "C",
 		Extensions:        []string{".c"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\"", "'"},
-	},
-	".h": {
+	}
+	m[".h"] = &Language{
 		Name:              "C Header",
 		Extensions:        []string{".h"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\"", "'"},
-	},
-	".cpp": {
+	}
+	m[".cpp"] = &Language{
 		Name:              "C++",
 		Extensions:        []string{".cpp", ".cc", ".cxx"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\"", "'"},
-	},
-	".cc": {
+	}
+	m[".cc"] = &Language{
 		Name:              "C++",
 		Extensions:        []string{".cpp", ".cc", ".cxx"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\"", "'"},
-	},
-	".hpp": {
+	}
+	m[".hpp"] = &Language{
 		Name:              "C++ Header",
 		Extensions:        []string{".hpp"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\"", "'"},
-	},
-	".cs": {
+	}
+	m[".cs"] = &Language{
 		Name:              "C#",
 		Extensions:        []string{".cs"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\"", "'"},
-	},
-	".php": {
+	}
+	m[".php"] = &Language{
 		Name:              "PHP",
 		Extensions:        []string{".php"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\"", "'"},
-	},
-	".swift": {
+	}
+	m[".swift"] = &Language{
 		Name:              "Swift",
 		Extensions:        []string{".swift"},
 		SingleLineComment: "//",
@@ -153,8 +179,8 @@ var Languages = map[string]*Language{
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\""},
 		NestedComments:    true,
-	},
-	".kt": {
+	}
+	m[".kt"] = &Language{
 		Name:              "Kotlin",
 		Extensions:        []string{".kt"},
 		SingleLineComment: "//",
@@ -162,8 +188,8 @@ var Languages = map[string]*Language{
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\""},
 		NestedComments:    true,
-	},
-	".rs": {
+	}
+	m[".rs"] = &Language{
 		Name:              "Rust",
 		Extensions:        []string{".rs"},
 		SingleLineComment: "//",
@@ -171,517 +197,519 @@ var Languages = map[string]*Language{
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\""},
 		NestedComments:    true,
-	},
-	".scala": {
+	}
+	m[".scala"] = &Language{
 		Name:              "Scala",
 		Extensions:        []string{".scala"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\"", "'"},
-	},
-	".json": {
+	}
+	m[".json"] = &Language{
 		Name:              "JSON",
 		Extensions:        []string{".json"},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".yaml": {
+	}
+	m[".yaml"] = &Language{
 		Name:              "YAML",
 		Extensions:        []string{".yaml", ".yml"},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".yml": {
+	}
+	m[".yml"] = &Language{
 		Name:              "YAML",
 		Extensions:        []string{".yaml", ".yml"},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".md": {
+	}
+	m[".md"] = &Language{
 		Name:              "Markdown",
 		Extensions:        []string{".md"},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".css": {
+	}
+	m[".css"] = &Language{
 		Name:              "CSS",
 		Extensions:        []string{".css"},
 		SingleLineComment: "",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".scss": {
+	}
+	m[".scss"] = &Language{
 		Name:              "SCSS",
 		Extensions:        []string{".scss"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".sass": {
+	}
+	m[".sass"] = &Language{
 		Name:              "Sass",
 		Extensions:        []string{".sass"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".less": {
+	}
+	m[".less"] = &Language{
 		Name:              "Less",
 		Extensions:        []string{".less"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".sql": {
+	}
+	m[".sql"] = &Language{
 		Name:              "SQL",
 		Extensions:        []string{".sql"},
 		SingleLineComment: "--",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".sh": {
+	}
+	m[".sh"] = &Language{
 		Name:              "Shell",
 		Extensions:        []string{".sh", ".bash"},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".bash": {
+	}
+	m[".bash"] = &Language{
 		Name:              "Shell",
 		Extensions:        []string{".sh", ".bash"},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".xml": {
+	}
+	m[".xml"] = &Language{
 		Name:              "XML",
 		Extensions:        []string{".xml"},
 		SingleLineComment: "",
 		MultiLineStart:    "<!--",
 		MultiLineEnd:      "-->",
-	},
-	".vue": {
+	}
+	m[".vue"] = &Language{
 		Name:              "Vue",
 		Extensions:        []string{".vue"},
 		SingleLineComment: "//",
 		MultiLineStart:    "<!--",
 		MultiLineEnd:      "-->",
-	},
-	".svelte": {
+	}
+	m[".svelte"] = &Language{
 		Name:              "Svelte",
 		Extensions:        []string{".svelte"},
 		SingleLineComment: "//",
 		MultiLineStart:    "<!--",
 		MultiLineEnd:      "-->",
-	},
-	".lua": {
+	}
+	m[".lua"] = &Language{
 		Name:              "Lua",
 		Extensions:        []string{".lua"},
 		SingleLineComment: "--",
 		MultiLineStart:    "--[[",
 		MultiLineEnd:      "]]",
-	},
-	".r": {
+	}
+	m[".r"] = &Language{
 		Name:              "R",
 		Extensions:        []string{".r", ".R"},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".R": {
+	}
+	m[".R"] = &Language{
 		Name:              "R",
 		Extensions:        []string{".r", ".R"},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".pl": {
+	}
+	m[".pl"] = &Language{
 		Name:              "Perl",
 		Extensions:        []string{".pl", ".pm"},
 		SingleLineComment: "#",
 		MultiLineStart:    "=pod",
 		MultiLineEnd:      "=cut",
-	},
-	".pm": {
+	}
+	m[".pm"] = &Language{
 		Name:              "Perl",
 		Extensions:        []string{".pl", ".pm"},
 		SingleLineComment: "#",
 		MultiLineStart:    "=pod",
 		MultiLineEnd:      "=cut",
-	},
-	".ex": {
+	}
+	m[".ex"] = &Language{
 		Name:              "Elixir",
 		Extensions:        []string{".ex", ".exs"},
 		SingleLineComment: "#",
 		MultiLineStart:    `"""`,
 		MultiLineEnd:      `"""`,
-	},
-	".exs": {
+	}
+	m[".exs"] = &Language{
 		Name:              "Elixir",
 		Extensions:        []string{".ex", ".exs"},
 		SingleLineComment: "#",
 		MultiLineStart:    `"""`,
 		MultiLineEnd:      `"""`,
-	},
-	".erl": {
+	}
+	m[".erl"] = &Language{
 		Name:              "Erlang",
 		Extensions:        []string{".erl"},
 		SingleLineComment: "%",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".hs": {
+	}
+	m[".hs"] = &Language{
 		Name:              "Haskell",
 		Extensions:        []string{".hs"},
 		SingleLineComment: "--",
 		MultiLineStart:    "{-",
 		MultiLineEnd:      "-}",
-	},
-	".clj": {
+	}
+	m[".clj"] = &Language{
 		Name:              "Clojure",
 		Extensions:        []string{".clj"},
 		SingleLineComment: ";",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".toml": {
+	}
+	m[".toml"] = &Language{
 		Name:              "TOML",
 		Extensions:        []string{".toml"},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".ini": {
+	}
+	m[".ini"] = &Language{
 		Name:              "INI",
 		Extensions:        []string{".ini"},
 		SingleLineComment: ";",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".dockerfile": {
+	}
+	m[".dockerfile"] = &Language{
 		Name:              "Dockerfile",
 		Extensions:        []string{".dockerfile"},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".makefile": {
+	}
+	m[".makefile"] = &Language{
 		Name:              "Makefile",
 		Extensions:        []string{".makefile"},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".tf": {
+	}
+	m[".tf"] = &Language{
 		Name:              "Terraform",
 		Extensions:        []string{".tf"},
 		SingleLineComment: "#",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".proto": {
+	}
+	m[".proto"] = &Language{
 		Name:              "Protocol Buffers",
 		Extensions:        []string{".proto"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".graphql": {
+	}
+	m[".graphql"] = &Language{
 		Name:              "GraphQL",
 		Extensions:        []string{".graphql", ".gql"},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".gql": {
+	}
+	m[".gql"] = &Language{
 		Name:              "GraphQL",
 		Extensions:        []string{".graphql", ".gql"},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".txt": {
+	}
+	m[".txt"] = &Language{
 		Name:              "Text",
 		Extensions:        []string{".txt"},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".hcl": {
+	}
+	m[".hcl"] = &Language{
 		Name:              "HCL",
 		Extensions:        []string{".hcl"},
 		SingleLineComment: "#",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".y": {
+	}
+	m[".y"] = &Language{
 		Name:              "Yacc",
 		Extensions:        []string{".y"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".nix": {
+	}
+	m[".nix"] = &Language{
 		Name:              "Nix",
 		Extensions:        []string{".nix"},
 		SingleLineComment: "#",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".json5": {
+	}
+	m[".json5"] = &Language{
 		Name:              "JSON5",
 		Extensions:        []string{".json5"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".s": {
+	}
+	m[".s"] = &Language{
 		Name:              "Assembly",
 		Extensions:        []string{".s", ".S", ".asm"},
 		SingleLineComment: ";",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".S": {
+	}
+	m[".S"] = &Language{
 		Name:              "Assembly",
 		Extensions:        []string{".s", ".S", ".asm"},
 		SingleLineComment: ";",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".asm": {
+	}
+	m[".asm"] = &Language{
 		Name:              "Assembly",
 		Extensions:        []string{".s", ".S", ".asm"},
 		SingleLineComment: ";",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".dart": {
+	}
+	m[".dart"] = &Language{
 		Name:              "Dart",
 		Extensions:        []string{".dart"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\"", "'"},
-	},
-	".groovy": {
+	}
+	m[".groovy"] = &Language{
 		Name:              "Groovy",
 		Extensions:        []string{".groovy"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
 		StringDelimiters:  []string{"\"", "'"},
-	},
-	".jl": {
+	}
+	m[".jl"] = &Language{
 		Name:              "Julia",
 		Extensions:        []string{".jl"},
 		SingleLineComment: "#",
 		MultiLineStart:    "#=",
 		MultiLineEnd:      "=#",
 		StringDelimiters:  []string{"\"", "'"},
-	},
-	".coffee": {
+	}
+	m[".coffee"] = &Language{
 		Name:              "CoffeeScript",
 		Extensions:        []string{".coffee"},
 		SingleLineComment: "#",
 		MultiLineStart:    "###",
 		MultiLineEnd:      "###",
 		StringDelimiters:  []string{"\"", "'", "`"},
-	},
-	".pug": {
+	}
+	m[".pug"] = &Language{
 		Name:              "Pug",
 		Extensions:        []string{".pug"},
 		SingleLineComment: "//",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".jade": {
+	}
+	m[".jade"] = &Language{
 		Name:              "Jade",
 		Extensions:        []string{".jade"},
 		SingleLineComment: "//",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".twig": {
+	}
+	m[".twig"] = &Language{
 		Name:              "Twig",
 		Extensions:        []string{".twig"},
 		SingleLineComment: "{#",
 		MultiLineStart:    "{#",
 		MultiLineEnd:      "#}",
-	},
-	".ejs": {
+	}
+	m[".ejs"] = &Language{
 		Name:              "EJS",
 		Extensions:        []string{".ejs"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".haml": {
+	}
+	m[".haml"] = &Language{
 		Name:              "Haml",
 		Extensions:        []string{".haml"},
 		SingleLineComment: "-#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".tsv": {
+	}
+	m[".tsv"] = &Language{
 		Name:              "TSV",
 		Extensions:        []string{".tsv"},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".csv": {
+	}
+	m[".csv"] = &Language{
 		Name:              "CSV",
 		Extensions:        []string{".csv"},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".awk": {
+	}
+	m[".awk"] = &Language{
 		Name:              "AWK",
 		Extensions:        []string{".awk"},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".sed": {
+	}
+	m[".sed"] = &Language{
 		Name:              "Sed",
 		Extensions:        []string{".sed"},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".v": {
+	}
+	m[".v"] = &Language{
 		Name:              "V",
 		Extensions:        []string{".v"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".zig": {
+	}
+	m[".zig"] = &Language{
 		Name:              "Zig",
 		Extensions:        []string{".zig"},
 		SingleLineComment: "//",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".ada": {
+	}
+	m[".ada"] = &Language{
 		Name:              "Ada",
 		Extensions:        []string{".ada", ".adb", ".ads"},
 		SingleLineComment: "--",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".adb": {
+	}
+	m[".adb"] = &Language{
 		Name:              "Ada",
 		Extensions:        []string{".ada", ".adb", ".ads"},
 		SingleLineComment: "--",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".ml": {
+	}
+	m[".ml"] = &Language{
 		Name:              "OCaml",
 		Extensions:        []string{".ml"},
 		SingleLineComment: "(*",
 		MultiLineEnd:      "*)",
 		MultiLineStart:    "(*",
-	},
-	".mli": {
+	}
+	m[".mli"] = &Language{
 		Name:              "OCaml Interface",
 		Extensions:        []string{".mli"},
 		SingleLineComment: "(*",
 		MultiLineEnd:      "*)",
 		MultiLineStart:    "(*",
-	},
-	".fs": {
+	}
+	m[".fs"] = &Language{
 		Name:              "F#",
 		Extensions:        []string{".fs", ".fsx", ".fsi"},
 		SingleLineComment: "//",
 		MultiLineStart:    "(*",
 		MultiLineEnd:      "*)",
-	},
-	".fsx": {
+	}
+	m[".fsx"] = &Language{
 		Name:              "F# Script",
 		Extensions:        []string{".fs", ".fsx", ".fsi"},
 		SingleLineComment: "//",
 		MultiLineStart:    "(*",
 		MultiLineEnd:      "*)",
-	},
-	".nim": {
+	}
+	m[".nim"] = &Language{
 		Name:              "Nim",
 		Extensions:        []string{".nim"},
 		SingleLineComment: "#",
 		MultiLineStart:    "#[",
 		MultiLineEnd:      "]#",
-	},
-	".d": {
+	}
+	m[".d"] = &Language{
 		Name:              "D",
 		Extensions:        []string{".d"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".pas": {
+	}
+	m[".pas"] = &Language{
 		Name:              "Pascal",
 		Extensions:        []string{".pas"},
 		SingleLineComment: "//",
 		MultiLineStart:    "(*",
 		MultiLineEnd:      "*)",
-	},
-	".vb": {
+	}
+	m[".vb"] = &Language{
 		Name:              "Visual Basic",
 		Extensions:        []string{".vb"},
 		SingleLineComment: "'",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".vbs": {
+	}
+	m[".vbs"] = &Language{
 		Name:              "VBScript",
 		Extensions:        []string{".vbs"},
 		SingleLineComment: "'",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".ps1": {
+	}
+	m[".ps1"] = &Language{
 		Name:              "PowerShell",
 		Extensions:        []string{".ps1"},
 		SingleLineComment: "#",
 		MultiLineStart:    "<#",
 		MultiLineEnd:      "#>",
-	},
-	".asmx": {
+	}
+	m[".asmx"] = &Language{
 		Name:              "ASP.NET",
 		Extensions:        []string{".asmx"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".aspx": {
+	}
+	m[".aspx"] = &Language{
 		Name:              "ASP.NET",
 		Extensions:        []string{".aspx"},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".cshtml": {
+	}
+	m[".cshtml"] = &Language{
 		Name:              "Razor",
 		Extensions:        []string{".cshtml"},
 		SingleLineComment: "@*",
 		MultiLineStart:    "@*",
 		MultiLineEnd:      "*@",
-	},
-	".vbhtml": {
+	}
+	m[".vbhtml"] = &Language{
 		Name:              "Razor VB",
 		Extensions:        []string{".vbhtml"},
 		SingleLineComment: "@*",
 		MultiLineStart:    "@*",
 		MultiLineEnd:      "*@",
-	},
-}
+	}
+
+	return m
+}()
 
 // BinaryExtensions contains file extensions that should be skipped
 var BinaryExtensions = map[string]bool{
@@ -1010,360 +1038,383 @@ var BinaryExtensions = map[string]bool{
 }
 
 // FilenameLanguages maps specific filenames (without extension) to languages
-var FilenameLanguages = map[string]*Language{
-	"Makefile": {
+var FilenameLanguages = func() map[string]*Language {
+	const capacity = 40
+	m := make(map[string]*Language, capacity)
+
+	m["Makefile"] = &Language{
 		Name:              "Makefile",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"makefile": {
+	}
+	m["makefile"] = &Language{
 		Name:              "Makefile",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"GNUmakefile": {
+	}
+	m["GNUmakefile"] = &Language{
 		Name:              "Makefile",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"Dockerfile": {
+	}
+	m["Dockerfile"] = &Language{
 		Name:              "Dockerfile",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"dockerfile": {
+	}
+	m["dockerfile"] = &Language{
 		Name:              "Dockerfile",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"LICENSE": {
+	}
+	m["LICENSE"] = &Language{
 		Name:              "License",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"LICENSE.txt": {
+	}
+	m["LICENSE.txt"] = &Language{
 		Name:              "License",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"LICENSE.md": {
+	}
+	m["LICENSE.md"] = &Language{
 		Name:              "License",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"LICENCE": {
+	}
+	m["LICENCE"] = &Language{
 		Name:              "License",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"COPYING": {
+	}
+	m["COPYING"] = &Language{
 		Name:              "License",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"README": {
+	}
+	m["README"] = &Language{
 		Name:              "Readme",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"README.txt": {
+	}
+	m["README.txt"] = &Language{
 		Name:              "Readme",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"Vagrantfile": {
+	}
+	m["Vagrantfile"] = &Language{
 		Name:              "Vagrantfile",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "=begin",
 		MultiLineEnd:      "=end",
-	},
-	"Gemfile": {
+	}
+	m["Gemfile"] = &Language{
 		Name:              "Gemfile",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "=begin",
 		MultiLineEnd:      "=end",
-	},
-	"Rakefile": {
+	}
+	m["Rakefile"] = &Language{
 		Name:              "Rakefile",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "=begin",
 		MultiLineEnd:      "=end",
-	},
-	"Procfile": {
+	}
+	m["Procfile"] = &Language{
 		Name:              "Procfile",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"CMakeLists.txt": {
+	}
+	m["CMakeLists.txt"] = &Language{
 		Name:              "CMake",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"Jenkinsfile": {
+	}
+	m["Jenkinsfile"] = &Language{
 		Name:              "Jenkinsfile",
 		Extensions:        []string{},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	"CHANGELOG": {
+	}
+	m["CHANGELOG"] = &Language{
 		Name:              "Changelog",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"CHANGELOG.md": {
+	}
+	m["CHANGELOG.md"] = &Language{
 		Name:              "Changelog",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"AUTHORS": {
+	}
+	m["AUTHORS"] = &Language{
 		Name:              "Authors",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"CONTRIBUTORS": {
+	}
+	m["CONTRIBUTORS"] = &Language{
 		Name:              "Contributors",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"build.gradle": {
+	}
+	m["build.gradle"] = &Language{
 		Name:              "Gradle",
 		Extensions:        []string{},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	"build.gradle.kts": {
+	}
+	m["build.gradle.kts"] = &Language{
 		Name:              "Gradle Kotlin",
 		Extensions:        []string{},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	"gradlew": {
+	}
+	m["gradlew"] = &Language{
 		Name:              "Shell Script",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"gradlew.bat": {
+	}
+	m["gradlew.bat"] = &Language{
 		Name:              "Batch File",
 		Extensions:        []string{},
 		SingleLineComment: "REM",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"mvnw": {
+	}
+	m["mvnw"] = &Language{
 		Name:              "Shell Script",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"mvnw.cmd": {
+	}
+	m["mvnw.cmd"] = &Language{
 		Name:              "Batch File",
 		Extensions:        []string{},
 		SingleLineComment: "REM",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"pom.xml": {
+	}
+	m["pom.xml"] = &Language{
 		Name:              "Maven POM",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "<!--",
 		MultiLineEnd:      "-->",
-	},
-	"composer.json": {
+	}
+	m["composer.json"] = &Language{
 		Name:              "Composer",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"package.json": {
+	}
+	m["package.json"] = &Language{
 		Name:              "NPM Package",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"tsconfig.json": {
+	}
+	m["tsconfig.json"] = &Language{
 		Name:              "TypeScript Config",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	"webpack.config.js": {
+	}
+	m["webpack.config.js"] = &Language{
 		Name:              "Webpack Config",
 		Extensions:        []string{},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	"gruntfile.js": {
+	}
+	m["gruntfile.js"] = &Language{
 		Name:              "Grunt",
 		Extensions:        []string{},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	"gulpfile.js": {
+	}
+	m["gulpfile.js"] = &Language{
 		Name:              "Gulp",
 		Extensions:        []string{},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-}
+	}
+
+	return m
+}()
 
 // HiddenFileLanguages maps hidden config files to languages
-var HiddenFileLanguages = map[string]*Language{
-	".gitignore": {
+var HiddenFileLanguages = func() map[string]*Language {
+	const estimatedCapacity = 20
+
+	m := make(map[string]*Language, estimatedCapacity)
+	m[".gitignore"] = &Language{
 		Name:              "Git Config",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".gitattributes": {
-		Name:              "Git Config",
-		Extensions:        []string{},
-		SingleLineComment: "#",
-		MultiLineStart:    "",
-		MultiLineEnd:      "",
-	},
-	".dockerignore": {
+	}
+
+	m[".dockerignore"] = &Language{
 		Name:              "Docker Config",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".editorconfig": {
+	}
+
+	m[".gitattributes"] = &Language{
+		Name:              "Git Config",
+		Extensions:        []string{},
+		SingleLineComment: "#",
+		MultiLineStart:    "",
+		MultiLineEnd:      "",
+	}
+
+	m[".editorconfig"] = &Language{
 		Name:              "EditorConfig",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".eslintrc": {
+	}
+
+	m[".eslintrc"] = &Language{
 		Name:              "ESLint Config",
 		Extensions:        []string{},
 		SingleLineComment: "//",
 		MultiLineStart:    "/*",
 		MultiLineEnd:      "*/",
-	},
-	".prettierrc": {
+	}
+
+	m[".prettierrc"] = &Language{
 		Name:              "Prettier Config",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".babelrc": {
+	}
+
+	m[".babelrc"] = &Language{
 		Name:              "Babel Config",
 		Extensions:        []string{},
 		SingleLineComment: "",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".npmrc": {
+	}
+
+	m[".npmrc"] = &Language{
 		Name:              "NPM Config",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".yarnrc": {
+	}
+
+	m[".yarnrc"] = &Language{
 		Name:              "Yarn Config",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".env": {
+	}
+
+	m[".env"] = &Language{
 		Name:              "Environment",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".env.example": {
+	}
+
+	m[".env.example"] = &Language{
 		Name:              "Environment",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".env.local": {
+	}
+
+	m[".env.local"] = &Language{
 		Name:              "Environment",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".htaccess": {
+	}
+
+	m[".htaccess"] = &Language{
 		Name:              "Apache Config",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-	".travis.yml": {
+	}
+
+	m[".travis.yml"] = &Language{
 		Name:              "Travis CI",
 		Extensions:        []string{},
 		SingleLineComment: "#",
 		MultiLineStart:    "",
 		MultiLineEnd:      "",
-	},
-}
+	}
+
+	return m
+}()
 
 // GetLanguage returns the language definition for a given file extension
 func GetLanguage(ext string) *Language {
-	if lang, ok := Languages[ext]; ok {
-		return lang
+	if lang, ok := languageSync.Load(ext); ok {
+		return lang.(*Language)
 	}
 	return nil
 }
@@ -1371,12 +1422,12 @@ func GetLanguage(ext string) *Language {
 // GetLanguageByFilename returns the language definition for a specific filename
 func GetLanguageByFilename(filename string) *Language {
 	// Check exact filename match first
-	if lang, ok := FilenameLanguages[filename]; ok {
-		return lang
+	if lang, ok := fileNameLanguageSync.Load(filename); ok {
+		return lang.(*Language)
 	}
 	// Check hidden file languages
-	if lang, ok := HiddenFileLanguages[filename]; ok {
-		return lang
+	if lang, ok := hiddenFileLanguageSync.Load(filename); ok {
+		return lang.(*Language)
 	}
 	return nil
 }
